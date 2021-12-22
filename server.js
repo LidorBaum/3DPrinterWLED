@@ -1,133 +1,65 @@
-const Axios = require("axios");
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const http = require("http").createServer(app);
+const { initiateLEDS, states } = require("./service");
 
-console.log('test');
+const mqtt = require("mqtt");
+const host = "192.168.1.11";
+const MQTTport = "1883";
+const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
+console.log(clientId);
+const connectUrl = `mqtt://${host}:${MQTTport}`;
+const client = mqtt.connect(connectUrl, {
+  clientId,
+  clean: true,
+  connectTimeout: 4000,
+  username: "lidor",
+  password: "1234",
+  reconnectPeriod: 1000,
+});
+const topic = "octoPrint/event/Connected";
+const topics = {
+  "octoPrint/event/Disconnected": states.disconnected,
+  "octoPrint/event/Connected": states.connected,
+  "octoPrint/event/Error": states.disconnected,
+  "octoPrint/event/PrintStarted": states.printStarted,
+  "octoPrint/event/PrintDone": states.printDone,
+  "octoPrint/event/PrintCancelling": states.printCancelling,
+  "octoPrint/event/FilamentChange": states.filamentChange,
+  "octoPrint/event/PrintResumed": states.printStarted,
+  "octoPrint/event/GcodeScriptAfterPrintCancelledFinished":
+    states.printCancelled,
+};
+client.on("connect", () => {
+  console.log("Connected");
+  client.subscribe(Object.keys(topics), () => {
+    console.log(`Subscribed to topics array`);
+  });
+  client.on("message", (topic, payload) => {
+    console.log("MEESAGE!", topic);
+    topics[topic]();
+  });
+});
 
 const corsOptions = {
-    origin: [
-        "http://127.0.0.1:8080",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://localhost:3000",
-    ],
-    credentials: true,
-    allowedHeaders: ["content-type"],
+  origin: [
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+  ],
+  credentials: true,
+  allowedHeaders: ["content-type"],
 };
 app.use(cors(corsOptions));
 
 app.get("/**", (req, res) => {
-    res.send('hi');
+  res.send("hi");
 });
 
-const port =  4444;
+const port = 4444;
 http.listen(port, () => console.log(`Listening on port ${port}...`));
 
-const axios = Axios.create({
-    withCredentials: true,
-    headers: {
-        "accept": 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        "User-Agent": 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        "Cookie": "remember_token_P80=sabaum|bdfb46e3749f7ae3e6ee25e5ef8ea2f7c4e9225d98905563e3b800836918560f7448423b4a0aa17ac2499614843ac1ee803fc6f8268f2a18270f43f1de251a7d; session_P80=.eJxVj0tuwzAQQ--idVHoM6OPdw7aXsMYa0a1AccJLHkRFL17VWTTbvlIgvxSUzmkLmpoxykvalpZDSoQzhEi-BBnoCLeInFGiOTYs9UOci4mYYGUcnIwE5OwZBeRE7lAzBY0A9tkCQl9cZCiDgZ0DJgwSQ46oJQ8WyrZGZOle6IYsFkbo_qQs8rxXFNppvPatZVlb2t7vNLZlqk97qKG_dy2P-R_YLt9rvt0lbzQvtZrR0tr9w5-y6vUut72ZwTBe31xyY-6Hx9x_EgIo3l7N0mj16i-fwAnT1nj.YcJCXw.yPqw_TJnS3uvc6Igq_SxkVJQ0mM"
-    }
-});
-const get = (endpoint, data) => {
-    return ajax(endpoint, "GET", data)
-}
-const post = (endpoint, data) => {
-    return ajax(endpoint, "POST", data)
-}
-
-async function ajax(endpoint, method = "get", data = null) {
-    try {
-        const res = await axios({
-            url: `${endpoint}`,
-            method,
-            data,
-        });
-        return res.data;
-    } catch (err) {
-        console.log(err);
-        return "Unable to fetch"
-    }
-}
-let isOn = false
-async function run() {
-    // setInterval(() => {
-        fetchim()
-    // }, 3000);
-}
-
-const LEDS = 20
-
-const LedsPerPercent = LEDS/100 //1 or 2
-
-const prepareSegments = (percaentage) => {
-    let segmentsArray = []
-    const lightenLeds = percaentage * LedsPerPercent
-    console.log(lightenLeds); //SHOULD BE 
-    let segLight = {
-        start: 0,
-        stop: lightenLeds - 2,
-        "col": [
-            [0, 160, 255, 0],
-            [200, 50, 180, 0],
-            [0, 0, 0, 0]
-        ],
-        "fx": 46,
-        "sx": 200,
-        "ix": 6,
-        bri: 255,
-    }
-    let segFlash = {
-        start: lightenLeds - 2,
-        stop: lightenLeds + 1,
-        "col": [
-            [0, 160, 255, 0],
-            [250, 0, 0, 0],
-            [0, 0, 250, 0]
-        ],
-        "fx": 46,
-        "sx": 100,
-        "ix": 6,
-        bri: 100
-    }
-    let segOff = {
-        start: lightenLeds + 1,
-        stop: LEDS,
-        bri: 0
-    }
-    segmentsArray.push(segLight, segFlash, segOff)
-
-    const json = {
-        on: true,
-        bri: 255,
-        seg: segmentsArray
-    }
-    return json
-}
-
-
-async function fetchim() {
-    // const res = await get('http://192.168.1.37/json')
-    // console.log(res);
-    // const jobInfo = await get('http://192.168.1.11/api/job')
-    // const timeElapsed = Number((jobInfo.progress.printTime / 60).toFixed(2))
-    // const timeLeft = Number((jobInfo.progress.printTimeLeft / 60).toFixed(2))
-    // const overallTime = Number((timeElapsed + timeLeft).toFixed(2))
-    // const percaentage = Math.floor((timeElapsed * 100 / overallTime))
-    // console.log(timeElapsed, timeLeft, overallTime, percaentage);
-    let i = 10
-    while(i<100){
-    setTimeout(() => {
-        const json = prepareSegments(i)
-    console.log(json);
-    post('http://192.168.1.37/json', json)
-    i += 10
-    }, 2000);
-    }
-}
-
-run()
+//INITATE THE ALGORITHM
+initiateLEDS();
