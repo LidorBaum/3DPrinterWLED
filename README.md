@@ -51,3 +51,6 @@ MQTTport - should be 1883 if you did not change it <br />
 WLED - the IP of the ESP <br />
 LEDS - how many LEDs you are using <br />
 ROWS - how many rows are there in your arrangement (you can use matrix leds) <br />
+
+open on the project folder, and run 'npm start server.js' <br />
+you should see in the console that the program connected to the MQTT and subscribed to the topics array. <br />
