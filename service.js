@@ -1,7 +1,7 @@
 const { get, post } = require("./httpService");
 
 const OCTOPRINT = "http://192.168.1.11";
-const WLED = "http://192.168.1.37";
+const WLED = "http://192.168.1.38";
 let printInterval;
 const emptySegments = [
   { stop: 0 },
@@ -16,10 +16,57 @@ const emptySegments = [
   { stop: 0 },
 ];
 
-const LEDS = 50;
-const ROWS = 2;
+const LEDS = 30;
+const ROWS = 1;
 const LedsPerPercent = LEDS / ROWS / 100;
 let isAlreadyOff = false;
+let shouldCheckTemps = true;
+
+const getSegmentColor = (color, lightenLeds) => {
+  const colors = {
+    colorRedBreath: {
+      col: [
+        [255, 0, 0, 0],
+        [220, 60, 60, 0],
+        [255, 120, 150, 0],
+      ],
+      fx: 2,
+      ix: Math.floor((LEDS - lightenLeds) / 3 + 3),
+      sx: 100,
+    },
+    colorGreenGradient: {
+      col: [
+        [0, 255, 0, 0],
+        [60, 200, 60, 0],
+        [0, 0, 0, 0],
+      ],
+      fx: 46,
+      sx: 240,
+      ix: Math.floor(lightenLeds / 3 + 2),
+    },
+    colorBlueBreath: {
+      col: [
+        [0, 0, 250, 0],
+        [100, 100, 250, 0],
+        [0, 0, 0, 0],
+      ],
+      fx: 2,
+      ix: Math.floor((LEDS - lightenLeds) / 3 + 3),
+      sx: 100,
+    },
+    colorRedGradient: {
+      col: [
+        [255, 120, 0, 0],
+        [220, 60, 60, 0],
+        [255, 120, 150, 0],
+      ],
+      fx: 46,
+      sx: 200,
+      ix: Math.floor(lightenLeds / 3 + 3),
+    },
+  };
+  return colors[color];
+};
 
 const errorState = async () => {
   const segmentsArray = [
@@ -43,9 +90,12 @@ const errorState = async () => {
     seg: segmentsArray,
   };
   clearInterval(printInterval);
+  shouldCheckTemps = true;
+  console.log("posting error state");
   await post(`${WLED}/json`, json);
   return;
 };
+
 const onConnectState = async () => {
   const segmentsArray = [
     {
@@ -68,9 +118,12 @@ const onConnectState = async () => {
     seg: segmentsArray,
   };
   clearInterval(printInterval);
+  shouldCheckTemps = true;
+  console.log("posting connected state");
   await post(`${WLED}/json`, json);
   return;
 };
+
 const onCancellingState = async () => {
   const segmentsArray = [
     {
@@ -92,10 +145,13 @@ const onCancellingState = async () => {
     bri: 255,
     seg: segmentsArray,
   };
+  shouldCheckTemps = true;
   clearInterval(printInterval);
+  console.log("posting cancelling state");
   await post(`${WLED}/json`, json);
   return;
 };
+
 const onCompletedPrintState = async () => {
   const segmentsArray = [
     {
@@ -117,8 +173,11 @@ const onCompletedPrintState = async () => {
     bri: 255,
     seg: segmentsArray,
   };
+  shouldCheckTemps = true;
   clearInterval(printInterval);
+  console.log("posting completedPrint state");
   await post(`${WLED}/json`, json);
+  setTimeout(onConnectState, 6000);
   return;
 };
 
@@ -133,8 +192,8 @@ const filamentChangeState = async () => {
         [0, 0, 0, 0],
       ],
       fx: 50,
-      sx: 70,
-      ix: 60,
+      sx: 100,
+      ix: 150,
     },
     ...emptySegments,
   ];
@@ -143,18 +202,22 @@ const filamentChangeState = async () => {
     bri: 255,
     seg: segmentsArray,
   };
+  shouldCheckTemps = true;
   clearInterval(printInterval);
+  console.log("posting M600 state");
   await post(`${WLED}/json`, json);
   setTimeout(onConnectState, 60000);
   return;
 };
+
 const printCancelledState = () => {
   setTimeout(onConnectState, 5000);
 };
-const prepareMatrix = (percaentage) => {
+
+const prepareMatrix = (baseColor, fillColor, percaentage) => {
   let segmentsArray = [];
   const lightenLeds = Math.floor(percaentage * LedsPerPercent);
-  let mi;
+
   for (i = 0; i < ROWS; i++) {
     let segLight;
     let segOff;
@@ -162,14 +225,7 @@ const prepareMatrix = (percaentage) => {
       segLight = {
         start: i * (LEDS / ROWS),
         stop: lightenLeds + 1 + i * (LEDS / ROWS),
-        col: [
-          [0, 255, 0, 0],
-          [60, 200, 60, 0],
-          [0, 0, 0, 0],
-        ],
-        fx: 46,
-        sx: 200,
-        ix: Math.floor(lightenLeds / 3 + 3),
+        ...getSegmentColor(fillColor, lightenLeds),
         bri: 255,
         status: "LIGHTEN of first row",
       };
@@ -177,47 +233,28 @@ const prepareMatrix = (percaentage) => {
         start: lightenLeds + i * (LEDS / ROWS) + 1,
         stop: (LEDS / ROWS) * (i + 1),
         bri: 255,
-        col: [
-          [255, 0, 0, 0],
-          [220, 60, 60, 0],
-          [255, 120, 150, 0],
-        ],
-        fx: 2,
-        ix: Math.floor((LEDS - lightenLeds) / 3 + 3),
-        sx: 100,
+        ...getSegmentColor(baseColor, lightenLeds),
         status: "RED of first row",
       };
       segmentsArray.push(segLight, segOff);
     } else {
+      segOff = {
+        start: i * (LEDS / ROWS),
+        stop: (LEDS / ROWS) * 2 - lightenLeds,
+        // stop: lightenLeds + 1 + i * (LEDS / ROWS) - 1,
+        bri: 255,
+        ...getSegmentColor(baseColor, lightenLeds),
+        status: "RED of second row",
+      };
       segLight = {
-        start: lightenLeds + i * (LEDS / ROWS),
+        start: (LEDS / ROWS) * 2 - lightenLeds,
         stop: (LEDS / ROWS) * (i + 1),
-        col: [
-          [0, 255, 0, 0],
-          [60, 200, 60, 0],
-          [0, 0, 0, 0],
-        ],
-        fx: 46,
-        sx: 200,
-        ix: Math.floor(lightenLeds / 3 + 3),
+        ...getSegmentColor(fillColor, lightenLeds),
         bri: 255,
         status: "LIGHTEN of second row",
       };
-      segOff = {
-        start: i * (LEDS / ROWS),
-        stop: lightenLeds + 1 + i * (LEDS / ROWS) - 1,
-        bri: 255,
-        col: [
-          [255, 0, 0, 0],
-          [220, 60, 60, 0],
-          [255, 120, 150, 0],
-        ],
-        fx: 2,
-        ix: Math.floor((LEDS - lightenLeds) / 3 + 3),
-        sx: 100,
-        status: "RED of second row",
-      };
-      segmentsArray.push(segOff, segLight);
+
+      segmentsArray.push(segLight, segOff);
     }
   }
   const json = {
@@ -235,7 +272,26 @@ const updateLeds = async () => {
   if (jobInfo.progress.printTime === null) {
     if (isAlreadyOff) return;
     isAlreadyOff = true;
-    return post(`${WLED}/json`, staticLEDJSON);
+    return;
+  }
+  if (shouldCheckTemps) {
+    const temps = await get(`${OCTOPRINT}/api/printer`);
+    const isReached = checkIfTempReached(
+      temps.temperature.tool0.actual,
+      temps.temperature.tool0.target
+    );
+    if (!isReached) {
+      const percaentage =
+        (temps.temperature.tool0.actual * 100) / temps.temperature.tool0.target;
+      const json = prepareMatrix(
+        "colorBlueBreath",
+        "colorRedGradient",
+        percaentage
+      );
+      console.log(json);
+      console.log("posting temp heating state");
+      return post(`${WLED}/json`, json);
+    } else shouldCheckTemps = false;
   }
   const timeElapsed = Number((jobInfo.progress.printTime / 60).toFixed(2));
   const timeLeft = Number((jobInfo.progress.printTimeLeft / 60).toFixed(2));
@@ -243,13 +299,18 @@ const updateLeds = async () => {
   const percaentage = Math.floor((timeElapsed * 100) / overallTime);
   if (percaentage === 100) return clearInterval(interval);
   console.log(timeElapsed, timeLeft, overallTime, percaentage);
-  const json = prepareMatrix(percaentage);
-  console.log(json);
+  const json = prepareMatrix(
+    "colorRedBreath",
+    "colorGreenGradient",
+    percaentage
+  );
+  console.log("posting print status state");
   post(`${WLED}/json`, json);
 };
 const printingState = () => {
+  shouldCheckTemps = true;
   updateLeds();
-  printInterval = setInterval(updateLeds, 1000);
+  printInterval = setInterval(updateLeds, 3000);
 };
 const states = {
   connected: onConnectState,
@@ -262,14 +323,15 @@ const states = {
 };
 
 module.exports = {
-  updateLeds,
   initiateLEDS,
   states,
+  printingState,
 };
 
 function checkIfTempReached(actual, target) {
-  console.log(Math.abs(actual - target) < 5);
-  if (Math.abs(actual - target) < 5) return true;
+  if (target < 200) return false;
+  console.log(Math.abs(actual - target) < 2);
+  if (Math.abs(actual - target) < 2) return true;
   return false;
 }
 
@@ -279,6 +341,7 @@ async function initiateLEDS() {
   const wledStatus = await get(`${WLED}/json/info`);
   if (octoPrintStatus.err || wledStatus.err) return;
   if (octoPrintStatus.printerNotConnected) return errorState();
+  console.log("octo up");
   switch (octoPrintStatus.state.text) {
     case "Operational":
       onConnectState();
@@ -288,8 +351,9 @@ async function initiateLEDS() {
         octoPrintStatus.temperature.tool0.actual,
         octoPrintStatus.temperature.tool0.target
       );
-      if (isReached) printingState();
-      else return; //ADD TEMPERATURE STATE
+
+      if (isReached) shouldCheckTemps = false;
+      printingState();
       break;
     case "Cancelling":
       onCancellingState();

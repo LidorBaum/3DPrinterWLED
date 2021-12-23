@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const http = require("http").createServer(app);
-const { initiateLEDS, states } = require("./service");
+const { initiateLEDS, states, printingState } = require("./service");
 
 const mqtt = require("mqtt");
 const host = "192.168.1.11";
@@ -18,7 +18,6 @@ const client = mqtt.connect(connectUrl, {
   password: "1234",
   reconnectPeriod: 1000,
 });
-const topic = "octoPrint/event/Connected";
 const topics = {
   "octoPrint/event/Disconnected": states.disconnected,
   "octoPrint/event/Connected": states.connected,
@@ -63,3 +62,4 @@ http.listen(port, () => console.log(`Listening on port ${port}...`));
 
 //INITATE THE ALGORITHM
 initiateLEDS();
+// printingState()
