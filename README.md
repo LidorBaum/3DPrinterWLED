@@ -54,3 +54,5 @@ ROWS - how many rows are there in your arrangement (you can use matrix leds) <br
 
 open on the project folder, and run 'npm start server.js' <br />
 you should see in the console that the program connected to the MQTT and subscribed to the topics array. <br />
+That's it, your LEDs supposed to be all up and running, according to the printer's state.
+Have fun! 
