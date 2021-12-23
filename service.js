@@ -1,7 +1,5 @@
 const { get, post } = require("./httpService");
-
-const OCTOPRINT = "http://192.168.1.11";
-const WLED = "http://192.168.1.38";
+const { LEDS, ROWS, OCTOPRINT, WLED } = require("./config");
 let printInterval;
 const emptySegments = [
   { stop: 0 },
@@ -15,9 +13,6 @@ const emptySegments = [
   { stop: 0 },
   { stop: 0 },
 ];
-
-const LEDS = 30;
-const ROWS = 1;
 const LedsPerPercent = LEDS / ROWS / 100;
 let isAlreadyOff = false;
 let shouldCheckTemps = true;
@@ -336,7 +331,6 @@ function checkIfTempReached(actual, target) {
 }
 
 async function initiateLEDS() {
-  console.log("HI INITIATE");
   const octoPrintStatus = await get(`${OCTOPRINT}/api/printer`);
   const wledStatus = await get(`${WLED}/json/info`);
   if (octoPrintStatus.err || wledStatus.err) return;
