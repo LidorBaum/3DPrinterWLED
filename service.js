@@ -16,6 +16,7 @@ const emptySegments = [
 const LedsPerPercent = LEDS / ROWS / 100;
 let isAlreadyOff = false;
 let shouldCheckTemps = true;
+let currentPercentage = null
 
 const getSegmentColor = (color, lightenLeds) => {
   const colors = {
@@ -87,7 +88,7 @@ const errorState = async () => {
   clearInterval(printInterval);
   shouldCheckTemps = true;
   console.log("posting error state");
-  await post(`${WLED}/json`, json);
+  post(`${WLED}/json`, json);
   return;
 };
 
@@ -148,21 +149,23 @@ const onCancellingState = async () => {
 };
 
 const onCompletedPrintState = async () => {
-  const segmentsArray = [
-    {
-      start: 0,
-      stop: LEDS,
-      col: [
-        [0, 255, 0, 0],
-        [250, 250, 250, 0],
-        [0, 0, 0, 0],
-      ],
-      fx: 90,
-      sx: 55,
-      ix: 20,
-    },
-    ...emptySegments,
-  ];
+  let segmentsArray = []
+  for(i=0; i<ROWS; i++){
+      const seg = {
+        start: LEDS/ROWS * i ,
+        stop: LEDS/ROWS * (i+1),
+        col: [
+          [0, 255, 0, 0],
+          [250, 250, 250, 0],
+          [0, 0, 0, 0],
+        ],
+        fx: 90,
+        sx: 55,
+        ix: 20,
+      }
+      segmentsArray.push(seg)
+  }
+  segmentsArray.push(...emptySegments)
   const json = {
     on: true,
     bri: 255,
@@ -172,7 +175,7 @@ const onCompletedPrintState = async () => {
   clearInterval(printInterval);
   console.log("posting completedPrint state");
   await post(`${WLED}/json`, json);
-  setTimeout(onConnectState, 6000);
+  setTimeout(onConnectState, 60000);
   return;
 };
 
@@ -197,10 +200,9 @@ const filamentChangeState = async () => {
     bri: 255,
     seg: segmentsArray,
   };
-  shouldCheckTemps = true;
   clearInterval(printInterval);
   console.log("posting M600 state");
-  await post(`${WLED}/json`, json);
+  post(`${WLED}/json`, json);
   setTimeout(onConnectState, 60000);
   return;
 };
@@ -211,8 +213,8 @@ const printCancelledState = () => {
 
 const prepareMatrix = (baseColor, fillColor, percaentage) => {
   let segmentsArray = [];
-  const lightenLeds = Math.floor(percaentage * LedsPerPercent);
-
+  let lightenLeds = Math.floor(percaentage * LedsPerPercent +1);
+  if(lightenLeds === 0 ) lightenLeds = 1
   for (i = 0; i < ROWS; i++) {
     let segLight;
     let segOff;
@@ -263,7 +265,6 @@ const prepareMatrix = (baseColor, fillColor, percaentage) => {
 const updateLeds = async () => {
   console.log("PROCCESSING");
   const jobInfo = await get(`${OCTOPRINT}/api/job`);
-  console.log(jobInfo);
   if (jobInfo.progress.printTime === null) {
     if (isAlreadyOff) return;
     isAlreadyOff = true;
@@ -293,6 +294,8 @@ const updateLeds = async () => {
   const overallTime = Number((timeElapsed + timeLeft).toFixed(2));
   const percaentage = Math.floor((timeElapsed * 100) / overallTime);
   if (percaentage === 100) return clearInterval(interval);
+  if(percaentage === currentPercentage) return 
+  currentPercentage = percaentage
   console.log(timeElapsed, timeLeft, overallTime, percaentage);
   const json = prepareMatrix(
     "colorRedBreath",
