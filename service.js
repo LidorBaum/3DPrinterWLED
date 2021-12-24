@@ -219,13 +219,13 @@ const prepareMatrix = (baseColor, fillColor, percaentage) => {
     if (i % 2 == 0) {
       segLight = {
         start: i * (LEDS / ROWS),
-        stop: lightenLeds + 1 + i * (LEDS / ROWS),
+        stop: lightenLeds + i * (LEDS / ROWS),
         ...getSegmentColor(fillColor, lightenLeds),
         bri: 255,
         status: "LIGHTEN of first row",
       };
       segOff = {
-        start: lightenLeds + i * (LEDS / ROWS) + 1,
+        start: lightenLeds + i * (LEDS / ROWS),
         stop: (LEDS / ROWS) * (i + 1),
         bri: 255,
         ...getSegmentColor(baseColor, lightenLeds),
