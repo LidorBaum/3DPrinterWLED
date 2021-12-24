@@ -37,24 +37,24 @@ client.on("connect", () => {
   });
 });
 
-const corsOptions = {
-  origin: [
-    "http://127.0.0.1:8080",
-    "http://localhost:8080",
-    "http://127.0.0.1:3000",
-    "http://localhost:3000",
-  ],
-  credentials: true,
-  allowedHeaders: ["content-type"],
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: [
+//     "http://127.0.0.1:8080",
+//     "http://localhost:8080",
+//     "http://127.0.0.1:3000",
+//     "http://localhost:3000",
+//   ],
+//   credentials: true,
+//   allowedHeaders: ["content-type"],
+// };
+// app.use(cors(corsOptions));
 
-app.get("/**", (req, res) => {
-  res.send("hi");
-});
+// app.get("/**", (req, res) => {
+//   res.send("hi");
+// });
 
-const port = 4444;
-http.listen(port, () => console.log(`Listening on port ${port}...`));
+// const port = 4444;
+// http.listen(port, () => console.log(`Listening on port ${port}...`));
 
 //INITATE THE ALGORITHM
 initiateLEDS();
