@@ -17,6 +17,16 @@ const LedsPerPercent = LEDS / ROWS / 100;
 let isAlreadyOff = false;
 let shouldCheckTemps = true;
 let currentPercentage = null
+let intervalTimer = 3000
+
+
+const getLEDJson = (segmentsArray) => {
+  return {
+    on: true,
+    bri: 255,
+    seg: segmentsArray
+  }
+}
 
 const getSegmentColor = (color, lightenLeds) => {
   const colors = {
@@ -80,11 +90,7 @@ const errorState = async () => {
     },
     ...emptySegments,
   ];
-  const json = {
-    on: true,
-    bri: 255,
-    seg: segmentsArray,
-  };
+  const json = getLEDJson(segmentsArray)
   clearInterval(printInterval);
   shouldCheckTemps = true;
   console.log("posting error state");
@@ -108,11 +114,7 @@ const onConnectState = async () => {
     },
     ...emptySegments,
   ];
-  const json = {
-    on: true,
-    bri: 255,
-    seg: segmentsArray,
-  };
+  const json = getLEDJson(segmentsArray)
   clearInterval(printInterval);
   shouldCheckTemps = true;
   console.log("posting connected state");
@@ -136,11 +138,7 @@ const onCancellingState = async () => {
     },
     ...emptySegments,
   ];
-  const json = {
-    on: true,
-    bri: 255,
-    seg: segmentsArray,
-  };
+  const json = getLEDJson(segmentsArray)
   shouldCheckTemps = true;
   clearInterval(printInterval);
   console.log("posting cancelling state");
@@ -150,27 +148,23 @@ const onCancellingState = async () => {
 
 const onCompletedPrintState = async () => {
   let segmentsArray = []
-  for(i=0; i<ROWS; i++){
-      const seg = {
-        start: LEDS/ROWS * i ,
-        stop: LEDS/ROWS * (i+1),
-        col: [
-          [0, 255, 0, 0],
-          [250, 250, 250, 0],
-          [0, 0, 0, 0],
-        ],
-        fx: 90,
-        sx: 55,
-        ix: 20,
-      }
-      segmentsArray.push(seg)
+  for (i = 0; i < ROWS; i++) {
+    const seg = {
+      start: LEDS / ROWS * i,
+      stop: LEDS / ROWS * (i + 1),
+      col: [
+        [0, 255, 0, 0],
+        [250, 250, 250, 0],
+        [0, 0, 0, 0],
+      ],
+      fx: 90,
+      sx: 55,
+      ix: 20,
+    }
+    segmentsArray.push(seg)
   }
   segmentsArray.push(...emptySegments)
-  const json = {
-    on: true,
-    bri: 255,
-    seg: segmentsArray,
-  };
+  const json = getLEDJson(segmentsArray)
   shouldCheckTemps = true;
   clearInterval(printInterval);
   console.log("posting completedPrint state");
@@ -195,11 +189,7 @@ const filamentChangeState = async () => {
     },
     ...emptySegments,
   ];
-  const json = {
-    on: true,
-    bri: 255,
-    seg: segmentsArray,
-  };
+  const json = getLEDJson(segmentsArray)
   clearInterval(printInterval);
   console.log("posting M600 state");
   post(`${WLED}/json`, json);
@@ -213,8 +203,8 @@ const printCancelledState = () => {
 
 const prepareMatrix = (baseColor, fillColor, percaentage) => {
   let segmentsArray = [];
-  let lightenLeds = Math.floor(percaentage * LedsPerPercent +1);
-  if(lightenLeds === 0 ) lightenLeds = 1
+  let lightenLeds = Math.floor(percaentage * LedsPerPercent + 1);
+  if (lightenLeds === 0) lightenLeds = 1
   for (i = 0; i < ROWS; i++) {
     let segLight;
     let segOff;
@@ -238,7 +228,6 @@ const prepareMatrix = (baseColor, fillColor, percaentage) => {
       segOff = {
         start: i * (LEDS / ROWS),
         stop: (LEDS / ROWS) * 2 - lightenLeds,
-        // stop: lightenLeds + 1 + i * (LEDS / ROWS) - 1,
         bri: 255,
         ...getSegmentColor(baseColor, lightenLeds),
         status: "RED of second row",
@@ -254,11 +243,7 @@ const prepareMatrix = (baseColor, fillColor, percaentage) => {
       segmentsArray.push(segLight, segOff);
     }
   }
-  const json = {
-    on: true,
-    bri: 255,
-    seg: segmentsArray,
-  };
+  const json = getLEDJson(segmentsArray)
   return json;
 };
 
@@ -294,7 +279,7 @@ const updateLeds = async () => {
   const overallTime = Number((timeElapsed + timeLeft).toFixed(2));
   const percaentage = Math.floor((timeElapsed * 100) / overallTime);
   if (percaentage === 100) return clearInterval(interval);
-  if(percaentage === currentPercentage) return 
+  if (percaentage === currentPercentage) return
   currentPercentage = percaentage
   console.log(timeElapsed, timeLeft, overallTime, percaentage);
   const json = prepareMatrix(
@@ -392,11 +377,6 @@ const prepareSegmentsFor1Row = (percaentage) => {
     sx: 100,
   };
   segmentsArray.push(segLight, segOff);
-
-  const json = {
-    on: true,
-    bri: 255,
-    seg: segmentsArray,
-  };
+  const json = getLEDJson(segmentsArray)
   return json;
 };
