@@ -4,7 +4,7 @@ const app = express();
 const http = require("http").createServer(app);
 const { initiateLEDS, states } = require("./service");
 const { host, MQTTport } = require("./config");
-
+let isInitiated = false;
 const mqtt = require("mqtt");
 const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
 const connectUrl = `mqtt://${host}:${MQTTport}`;
@@ -15,6 +15,7 @@ const client = mqtt.connect(connectUrl, {
   reconnectPeriod: 1000,
 });
 const topics = {
+  "octoPrint/event/Startup": initiateLEDS,
   "octoPrint/event/Disconnected": states.disconnected,
   "octoPrint/event/Connected": states.connected,
   "octoPrint/event/Error": states.disconnected,
@@ -37,25 +38,25 @@ client.on("connect", () => {
   });
 });
 
-const corsOptions = {
-  origin: [
-    "http://127.0.0.1:8080",
-    "http://localhost:8080",
-    "http://127.0.0.1:3000",
-    "http://localhost:3000",
-  ],
-  credentials: true,
-  allowedHeaders: ["content-type"],
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: [
+//     "http://127.0.0.1:8080",
+//     "http://localhost:8080",
+//     "http://127.0.0.1:3000",
+//     "http://localhost:3000",
+//   ],
+//   credentials: true,
+//   allowedHeaders: ["content-type"],
+// };
+// app.use(cors(corsOptions));
 
-app.get("/**", (req, res) => {
-  res.send("hi");
-});
+// app.get("/**", (req, res) => {
+//   res.send("hi");
+// });
 
-const port = 4444;
-http.listen(port, () => console.log(`Listening on port ${port}...`));
+// const port = 4444;
+// http.listen(port, () => console.log(`Listening on port ${port}...`));
 
 //INITATE THE ALGORITHM
-initiateLEDS();
+if (!isInitiated) initiateLEDS();
 // printingState()
