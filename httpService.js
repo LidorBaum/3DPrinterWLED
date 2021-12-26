@@ -25,6 +25,7 @@ async function ajax(endpoint, method = "get", data = null) {
       url: `${endpoint}`,
       method,
       data,
+      // timeout: 1000
     });
     return res.data;
   } catch (err) {

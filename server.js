@@ -2,7 +2,9 @@
 // const cors = require("cors");
 // const app = express();
 // const http = require("http").createServer(app);
-const { initiateLEDS, states } = require("./service");
+const environment = process.env.NODE_ENV || "prod";
+console.log(environment);
+const { octoprintLoading, initiateLEDS, states } = require("./service");
 const { host, MQTTport } = require("./config");
 let isInitiated = false;
 const mqtt = require("mqtt");
@@ -24,11 +26,16 @@ const topics = {
   "octoPrint/event/PrintCancelling": states.printCancelling,
   "octoPrint/event/FilamentChange": states.filamentChange,
   "octoPrint/event/PrintResumed": states.printStarted,
+  "octoPrint/event/Startup": states.connected,
   "octoPrint/event/GcodeScriptAfterPrintCancelledFinished":
     states.printCancelled,
 };
+const { get, post } = require("./httpService");
 client.on("connect", () => {
   console.log("Connected to MQTT");
+
+  //if it is the first subscribe && no pi, so no wait
+  if (environment === "pi") setTimeout(initiateLEDS, 20000);
   client.subscribe(Object.keys(topics), () => {
     console.log(`Subscribed to topics array`);
   });
@@ -58,5 +65,6 @@ client.on("connect", () => {
 // http.listen(port, () => console.log(`Listening on port ${port}...`));
 
 //INITATE THE ALGORITHM
-if (!isInitiated) initiateLEDS();
+if (environment === "pi") octoprintLoading();
+else initiateLEDS();
 // printingState()

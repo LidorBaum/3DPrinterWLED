@@ -15,41 +15,47 @@ const emptySegments = [
 const LedsPerPercent = LEDS / ROWS / 100;
 let isAlreadyOff = false;
 let shouldCheckTemps = true;
-let currentPercentage = null
-let printIntervalTimerObj = {intervalId: null, interval: 3000, isUpdated: false}
-let printerState = null
-let noOctoprintResponseTimeout = null
+let currentPercentage = null;
+let printIntervalTimerObj = {
+  intervalId: null,
+  interval: 3000,
+  isUpdated: false,
+};
+let printerState = null;
+let noOctoprintResponseTimeout = null;
+let isOctoprintAliveInterval = null;
 
 const switchState = (segmentsArray, printerNewState) => {
-  const json = getLEDJson(segmentsArray)
+  const json = getLEDJson(segmentsArray);
   clearInterval(printIntervalTimerObj.intervalId);
+  clearInterval(isOctoprintAliveInterval);
   shouldCheckTemps = true;
-  printerState = printerNewState
-  resetPrintIntervalTimerObj()
+  printerState = printerNewState;
+  resetPrintIntervalTimerObj();
   console.log(`posting ${printerNewState} state`);
   post(`${WLED}/json`, json);
-}
+};
 
 const setNewPrintInterval = (newTimer) => {
-  clearInterval(printIntervalTimerObj.intervalId)
-  printIntervalTimerObj = {interval: newTimer, isUpdated: true}
+  clearInterval(printIntervalTimerObj.intervalId);
+  printIntervalTimerObj = { interval: newTimer, isUpdated: true };
   printIntervalTimerObj.intervalId = setInterval(updateLedsPrinting, newTimer);
-}
+};
 
-const scheduleTimeout = (cb, timeout, expectedPrinterState) => { 
+const scheduleTimeout = (cb, timeout, expectedPrinterState) => {
   setTimeout(() => {
-    if(printerState === expectedPrinterState) cb()
+    if (printerState === expectedPrinterState) cb();
   }, timeout);
-}
+};
 //prog need to reset the interval obj so the next print will fresh-start, both on last print completed or failed
 const resetPrintIntervalTimerObj = () => {
   printIntervalTimerObj = {
     interval: 3000,
-    isUpdated: false
-  }
-}
+    isUpdated: false,
+  };
+};
 
-const turnOffLEDs = () =>{
+const turnOffLEDs = () => {
   const segmentsArray = [
     {
       start: 0,
@@ -59,29 +65,42 @@ const turnOffLEDs = () =>{
         [250, 250, 250, 0],
         [200, 0, 0, 0],
       ],
-      bri: 0
+      bri: 0,
     },
     ...emptySegments,
   ];
-  const json = getLEDJson(segmentsArray)
+  const json = getLEDJson(segmentsArray);
   console.log("posting No Octoprint state");
   post(`${WLED}/json`, json);
   return;
-}
+};
 
 const getLEDJson = (segmentsArray) => {
   return {
     on: true,
     bri: 255,
-    seg: segmentsArray
-  }
-}
+    seg: segmentsArray,
+  };
+};
 
 const checkIfTempReached = (actual, target) => {
   if (target < 200) return false;
   if (Math.abs(actual - target) < 2) return true;
   return false;
-}
+};
+
+const checkIfOctoprintAlive = async () => {
+  console.log("check alive");
+  const res = await get(`${OCTOPRINT}/api/printer`);
+  if (res.err && printerState === printerStates.disconnected) return;
+  if (res.err && printerState !== printerStates.disconnected) {
+    console.log("no response from octoprint");
+    clearInterval(isOctoprintAliveInterval);
+    return errorState();
+  }
+  if (printerState === printerStates.connected) return;
+  return onConnectState();
+};
 
 const getSegmentColor = (color, lightenLeds) => {
   const colors = {
@@ -129,6 +148,26 @@ const getSegmentColor = (color, lightenLeds) => {
   return colors[color];
 };
 
+const octoprintLoading = () => {
+  const segmentsArray = [
+    {
+      start: 0,
+      stop: LEDS,
+      col: [
+        [0, 255, , 0],
+        [250, 250, 250, 0],
+        [200, 0, 0, 0],
+      ],
+      fx: 3,
+      sx: 200,
+      ix: 200,
+    },
+    ...emptySegments,
+  ];
+  switchState(segmentsArray, printerStates.waitingOctoprintStatup);
+  return;
+};
+
 const errorState = async () => {
   const segmentsArray = [
     {
@@ -145,7 +184,8 @@ const errorState = async () => {
     },
     ...emptySegments,
   ];
-  switchState(segmentsArray, printerStates.disconnected)
+  switchState(segmentsArray, printerStates.disconnected);
+  isOctoprintAliveInterval = setInterval(checkIfOctoprintAlive, 7000);
   return;
 };
 
@@ -162,11 +202,12 @@ const onConnectState = async () => {
       fx: 12,
       sx: 50,
       ix: 100,
-      bri: 255
+      bri: 255,
     },
     ...emptySegments,
   ];
-  switchState(segmentsArray, printerStates.connected)
+  switchState(segmentsArray, printerStates.connected);
+  isOctoprintAliveInterval = setInterval(checkIfOctoprintAlive, 7000);
   return;
 };
 
@@ -186,16 +227,16 @@ const onCancellingState = async () => {
     },
     ...emptySegments,
   ];
-  switchState(segmentsArray, printerStates.printCancelling)
+  switchState(segmentsArray, printerStates.printCancelling);
   return;
 };
 
 const onCompletedPrintState = async () => {
-  let segmentsArray = []
+  let segmentsArray = [];
   for (i = 0; i < ROWS; i++) {
     const seg = {
-      start: LEDS / ROWS * i,
-      stop: LEDS / ROWS * (i + 1),
+      start: (LEDS / ROWS) * i,
+      stop: (LEDS / ROWS) * (i + 1),
       col: [
         [0, 255, 0, 0],
         [250, 250, 250, 0],
@@ -204,12 +245,12 @@ const onCompletedPrintState = async () => {
       fx: 90,
       sx: 55,
       ix: 20,
-    }
-    segmentsArray.push(seg)
+    };
+    segmentsArray.push(seg);
   }
-  segmentsArray.push(...emptySegments)
-  switchState(segmentsArray, printerStates.connected)
-  scheduleTimeout(onConnectState, 60000, printerStates.connected)
+  segmentsArray.push(...emptySegments);
+  switchState(segmentsArray, printerStates.connected);
+  scheduleTimeout(onConnectState, 60000, printerStates.connected);
   return;
 };
 
@@ -229,21 +270,21 @@ const filamentChangeState = async () => {
     },
     ...emptySegments,
   ];
-  switchState(segmentsArray, printerStates.waitingFilamentChange)
-  currentPercentage = null
-  scheduleTimeout(onConnectState, 60000, printerStates.waitingFilamentChange)
-  return; 
+  switchState(segmentsArray, printerStates.waitingFilamentChange);
+  currentPercentage = null;
+  scheduleTimeout(onConnectState, 60000, printerStates.waitingFilamentChange);
+  return;
 };
 
 const printCancelledState = () => {
-  printerState = printerStates.printCancelling
-  scheduleTimeout(onConnectState, 7000, printerStates.printCancelling)
+  printerState = printerStates.printCancelling;
+  scheduleTimeout(onConnectState, 7000, printerStates.printCancelling);
 };
 
 const prepareMatrix = (baseColor, fillColor, percaentage) => {
   let segmentsArray = [];
   let lightenLeds = Math.floor(percaentage * LedsPerPercent + 1);
-  if (lightenLeds === 0) lightenLeds = 1
+  if (lightenLeds === 0) lightenLeds = 1;
   for (i = 0; i < ROWS; i++) {
     let segLight;
     let segOff;
@@ -282,20 +323,26 @@ const prepareMatrix = (baseColor, fillColor, percaentage) => {
       segmentsArray.push(segLight, segOff);
     }
   }
-  const json = getLEDJson(segmentsArray)
+  const json = getLEDJson(segmentsArray);
   return json;
-};                                    
+};
 
 const printingState = () => {
   shouldCheckTemps = true;
-  printerState = printerStates.printing
+  printerState = printerStates.printing;
   updateLedsPrinting();
   printIntervalTimerObj.intervalId = setInterval(updateLedsPrinting, 3000);
 };
 
 const updateLedsPrinting = async () => {
-  console.log("PROCCESSING, interval timer is: ", printIntervalTimerObj.interval);
+  console.log(
+    "PROCCESSING, interval timer is: ",
+    printIntervalTimerObj.interval
+  );
   const jobInfo = await get(`${OCTOPRINT}/api/job`);
+  if (jobInfo.err || jobInfo.printerNotConnected) {
+    errorState();
+  }
   if (jobInfo.progress.printTime === null) {
     if (isAlreadyOff) return;
     isAlreadyOff = true;
@@ -322,21 +369,22 @@ const updateLedsPrinting = async () => {
   const timeElapsed = Number((jobInfo.progress.printTime / 60).toFixed(2));
   const timeLeft = Number((jobInfo.progress.printTimeLeft / 60).toFixed(2));
   const overallTime = Number((timeElapsed + timeLeft).toFixed(2));
-  if(!printIntervalTimerObj.isUpdated){
-    if(overallTime < 60) setNewPrintInterval(10000)
-    else setNewPrintInterval(40000)
+  if (!printIntervalTimerObj.isUpdated) {
+    if (overallTime < 60) setNewPrintInterval(10000);
+    else setNewPrintInterval(40000);
   }
   const percaentage = Math.floor((timeElapsed * 100) / overallTime);
   if (percaentage === 100) return clearInterval(interval);
-  if (percaentage === currentPercentage) return
-  currentPercentage = percaentage
+  if (percaentage === currentPercentage) return;
+  currentPercentage = percaentage;
   console.log(timeElapsed, timeLeft, overallTime, percaentage);
   const json = prepareMatrix(
     "colorRedBreath",
     "colorGreenGradient",
     percaentage
   );
-  if(printerState !== printerStates.printing) printerState = printerStates.printing
+  if (printerState !== printerStates.printing)
+    printerState = printerStates.printing;
   console.log("posting print status state");
   post(`${WLED}/json`, json);
 };
@@ -353,33 +401,35 @@ const states = {
 
 //for timeout schedules - so the leds won't show wrong state
 const printerStates = {
-  connected: 'connected',
-  printing: 'printing',
-  waitingFilamentChange: 'waitingFilamentChange',
-  printCancelling: 'printCancelling',
-  disconnected: 'disconnected'
-  
-}
+  connected: "connected",
+  printing: "printing",
+  waitingFilamentChange: "waitingFilamentChange",
+  printCancelling: "printCancelling",
+  disconnected: "disconnected",
+  waitingOctoprintStatup: "waitingOctoprintStatup",
+};
 
 module.exports = {
   initiateLEDS,
   states,
   printingState,
+  octoprintLoading,
 };
 
 async function initiateLEDS() {
   const octoPrintStatus = await get(`${OCTOPRINT}/api/printer`);
   const wledStatus = await get(`${WLED}/json/info`);
-  if(octoPrintStatus.err && wledStatus) {
-   console.log('no response from octoprint');
-    return noOctoprintResponseTimeout = setTimeout(turnOffLEDs, 10000)
+  if (octoPrintStatus.err && wledStatus) {
+    console.log("no response from octoprint");
+    // return noOctoprintResponseTimeout = setTimeout(errorState, 2000)
+    return errorState();
   }
   if (octoPrintStatus.err || wledStatus.err) return;
   if (octoPrintStatus.printerNotConnected) return errorState();
   console.log("octo up");
   switch (octoPrintStatus.state.text) {
     case "Operational":
-      printerState = printerStates.connected
+      printerState = printerStates.connected;
       onConnectState();
       break;
     case "Printing":
@@ -388,15 +438,15 @@ async function initiateLEDS() {
         octoPrintStatus.temperature.tool0.target
       );
       if (isReached) shouldCheckTemps = false;
-      printerState = printerStates.printing
+      printerState = printerStates.printing;
       printingState();
       break;
     case "Cancelling":
-      printerState = printerStates.printCancelling
+      printerState = printerStates.printCancelling;
       onCancellingState();
       break;
     default:
-      printerState = printerStates.connected
+      printerState = printerStates.connected;
       onConnectState();
       break;
   }
