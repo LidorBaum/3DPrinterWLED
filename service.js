@@ -92,14 +92,14 @@ const checkIfTempReached = (actual, target) => {
 const checkIfOctoprintAlive = async () => {
   console.log("check alive");
   const res = await get(`${OCTOPRINT}/api/printer`);
+  if(!res.err && printerState !== printerStates.connected) return onConnectState();
+  if(!res.err) return
   if (res.err && printerState === printerStates.disconnected) return;
   if (res.err && printerState !== printerStates.disconnected) {
     console.log("no response from octoprint");
     clearInterval(isOctoprintAliveInterval);
     return errorState();
   }
-  if (printerState === printerStates.connected) return;
-  return onConnectState();
 };
 
 const getSegmentColor = (color, lightenLeds) => {
