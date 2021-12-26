@@ -2,7 +2,7 @@
 // const cors = require("cors");
 // const app = express();
 // const http = require("http").createServer(app);
-const environment = process.env.NODE_ENV || "prod";
+const environment = process.env.NODE_ENV || "pi";
 console.log(environment);
 const { octoprintLoading, initiateLEDS, states } = require("./service");
 const { host, MQTTport } = require("./config");
