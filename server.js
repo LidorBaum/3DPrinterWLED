@@ -35,7 +35,10 @@ client.on("connect", () => {
   console.log("Connected to MQTT");
 
   //if it is the first subscribe && no pi, so no wait
-  if (environment === "pi") setTimeout(initiateLEDS, 20000);
+  if (environment === "pi"){
+    octoprintLoading()
+    setTimeout(initiateLEDS, 20000);
+  }
   client.subscribe(Object.keys(topics), () => {
     console.log(`Subscribed to topics array`);
   });
@@ -65,6 +68,5 @@ client.on("connect", () => {
 // http.listen(port, () => console.log(`Listening on port ${port}...`));
 
 //INITATE THE ALGORITHM
-if (environment === "pi") octoprintLoading();
-else initiateLEDS();
+if (environment !== "pi") initiateLEDS();
 // printingState()
