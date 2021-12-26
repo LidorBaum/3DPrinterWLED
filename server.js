@@ -33,9 +33,11 @@ const topics = {
 const { get, post } = require("./httpService");
 client.on("connect", () => {
   console.log("Connected to MQTT");
+  console.log(environment , 'env');
 
   //if it is the first subscribe && no pi, so no wait
   if (environment === "pi"){
+    console.log('pi environment');
     octoprintLoading()
     setTimeout(initiateLEDS, 20000);
   }
