@@ -90,17 +90,20 @@ const checkIfTempReached = (actual, target) => {
 };
 
 const checkIfOctoprintAlive = async () => {
-  console.log("check alive");
   const res = await get(`${OCTOPRINT}/api/printer?apikey=${APIKEY}`);
-  // console.log(res.error, res.err, res.data);
+  //if octo alive and the state is not connected
   if((res.error || res.state ) && printerState !== printerStates.connected){
-    // console.log(res, 'line 96'); 
     return onConnectState();
   }
+
+  //if the octo alive and the state is already connected
   if(res.error || res.state) return
+
+  //if octo not alive and the state is already disconnected
   if (res.err && printerState === printerStates.disconnected) return;
+
+  //if octo not alive and the state is not disconnected
   if (res.err && printerState !== printerStates.disconnected) {
-    console.log("no response from octoprint");
     return errorState();
   }
 };
@@ -275,13 +278,12 @@ const filamentChangeState = async () => {
   ];
   switchState(segmentsArray, printerStates.waitingFilamentChange);
   currentPercentage = null;
-  scheduleTimeout(onConnectState, 60000, printerStates.waitingFilamentChange);
+  // scheduleTimeout(onConnectState, 60000, printerStates.waitingFilamentChange);
   return;
 };
 
 const printCancelledState = () => {
   printerState = printerStates.printCancelling;
-  console.log('scheduling timeout for cancelling');
   scheduleTimeout(onConnectState, 7000, printerStates.printCancelling);
 };
 
@@ -424,14 +426,15 @@ module.exports = {
 async function initiateLEDS() {
   const octoPrintStatus = await get(`${OCTOPRINT}/api/printer?apikey=FCD5C4119908427AB46ED1F09AB28EED`);
   const wledStatus = await get(`${WLED}/json/info`);
+  //if octo not responding but wled is alive
   if (octoPrintStatus.err && !wledStatus.err) {
-    console.log("no response from octoprint, but yes WLED", octoPrintStatus, );
-    // return noOctoprintResponseTimeout = setTimeout(errorState, 2000)
     return errorState();
   }
+
+  //if octo not responding or WLED not alive, nothing to procceed, waiting for mqtt
   if (octoPrintStatus.err || wledStatus.err) return;
+
   if (octoPrintStatus.printerNotConnected) return errorState();
-  console.log("octo up");
   switch (octoPrintStatus.state.text) {
     case "Operational":
       printerState = printerStates.connected;
