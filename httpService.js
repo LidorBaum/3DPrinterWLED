@@ -28,7 +28,7 @@ async function ajax(endpoint, method = "get", data = null) {
     });
     return res.data;
   } catch (err) {
-    console.log("couldnyt fetch");
+    console.log("couldnyt fetch", err.response?.data, err.response?.status, " status");
     if (err.response?.status === 409)
       return { printerNotConnected: "printerNotConnected" };
     return { err: "could not fetch" };
