@@ -100,7 +100,6 @@ const checkIfOctoprintAlive = async () => {
   if (res.err && printerState === printerStates.disconnected) return;
   if (res.err && printerState !== printerStates.disconnected) {
     console.log("no response from octoprint");
-    // clearInterval(isOctoprintAliveInterval);
     return errorState();
   }
 };
