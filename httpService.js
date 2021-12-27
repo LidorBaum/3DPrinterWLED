@@ -20,7 +20,7 @@ const post = (endpoint, data) => {
 };
 
 async function ajax(endpoint, method = "get", data = null) {
-  try {
+  try { 
     const res = await axios({
       url: `${endpoint}`,
       method,
@@ -28,7 +28,7 @@ async function ajax(endpoint, method = "get", data = null) {
     });
     return res.data;
   } catch (err) {
-    console.log("couldnyt fetch", err.response?.data, err.response?.status, " status");
+    // console.log("couldnyt fetch", err.response?.data, err.response?.status, " status");
     if (err.response?.status === 409)
       return { printerNotConnected: "printerNotConnected" };
     return { err: "could not fetch" };
