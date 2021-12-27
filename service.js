@@ -92,6 +92,7 @@ const checkIfTempReached = (actual, target) => {
 const checkIfOctoprintAlive = async () => {
   console.log("check alive");
   const res = await get(`${OCTOPRINT}/api/printer`);
+  console.log(res.error, res.err, res.data);
   if((res.error || res.state ) && printerState !== printerStates.connected){
     console.log(res, 'line 96'); 
     return onConnectState();
@@ -421,6 +422,8 @@ module.exports = {
 };
 
 async function initiateLEDS() {
+  const octoLogin = await post(`${OCTOPRINT}/api/login`, {user:'sabaum', pass:'1234'})
+  console.log(octoLogin.name, 'name of octo login');
   const octoPrintStatus = await get(`${OCTOPRINT}/api/printer`);
   const wledStatus = await get(`${WLED}/json/info`);
   if (octoPrintStatus.err && wledStatus) {

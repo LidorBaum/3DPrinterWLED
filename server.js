@@ -30,7 +30,6 @@ const topics = {
   "octoPrint/event/GcodeScriptAfterPrintCancelledFinished":
     states.printCancelled,
 };
-const { get, post } = require("./httpService");
 client.on("connect", () => {
   console.log("Connected to MQTT");
   console.log(environment , 'env');
