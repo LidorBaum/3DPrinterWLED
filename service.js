@@ -424,10 +424,11 @@ module.exports = {
 async function initiateLEDS() {
   const octoLogin = await post(`${OCTOPRINT}/api/login`, {user:'sabaum', pass:'1234'})
   console.log(octoLogin.name, 'name of octo login');
-  const octoPrintStatus = await get(`${OCTOPRINT}/api/printer`);
+  const octoPrintStatus = await get(`${OCTOPRINT}/api/printer?apikey=FCD5C4119908427AB46ED1F09AB28EED`);
   const wledStatus = await get(`${WLED}/json/info`);
-  if (octoPrintStatus.err && wledStatus) {
-    console.log("no response from octoprint");
+  
+  if (octoPrintStatus.err && !wledStatus.err) {
+    console.log("no response from octoprint", octoPrintStatus, wledStatus);
     // return noOctoprintResponseTimeout = setTimeout(errorState, 2000)
     return errorState();
   }
