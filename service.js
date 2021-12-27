@@ -92,7 +92,10 @@ const checkIfTempReached = (actual, target) => {
 const checkIfOctoprintAlive = async () => {
   console.log("check alive");
   const res = await get(`${OCTOPRINT}/api/printer`);
-  if((res.error || res.state ) && printerState !== printerStates.connected) return onConnectState();
+  if((res.error || res.state ) && printerState !== printerStates.connected){
+    console.log(res, 'line 96'); 
+    return onConnectState();
+  }
   if(res.error || res.state) return
   if (res.err && printerState === printerStates.disconnected) return;
   if (res.err && printerState !== printerStates.disconnected) {
