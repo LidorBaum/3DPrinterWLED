@@ -1,5 +1,5 @@
 const { get, post } = require("./httpService");
-const { LEDS, ROWS, OCTOPRINT, WLED } = require("./config");
+const { LEDS, ROWS, OCTOPRINT, WLED, APIKEY } = require("./config");
 const emptySegments = [
   { stop: 0 },
   { stop: 0 },
@@ -91,10 +91,10 @@ const checkIfTempReached = (actual, target) => {
 
 const checkIfOctoprintAlive = async () => {
   console.log("check alive");
-  const res = await get(`${OCTOPRINT}/api/printer`);
-  console.log(res.error, res.err, res.data);
+  const res = await get(`${OCTOPRINT}/api/printer?apikey=${APIKEY}`);
+  // console.log(res.error, res.err, res.data);
   if((res.error || res.state ) && printerState !== printerStates.connected){
-    console.log(res, 'line 96'); 
+    // console.log(res, 'line 96'); 
     return onConnectState();
   }
   if(res.error || res.state) return
@@ -344,7 +344,7 @@ const updateLedsPrinting = async () => {
     "PROCCESSING, interval timer is: ",
     printIntervalTimerObj.interval
   );
-  const jobInfo = await get(`${OCTOPRINT}/api/job`);
+  const jobInfo = await get(`${OCTOPRINT}/api/job?apikey=${APIKEY}`);
   if (jobInfo.err || jobInfo.printerNotConnected) {
     errorState();
   }
@@ -354,7 +354,7 @@ const updateLedsPrinting = async () => {
     return;
   }
   if (shouldCheckTemps) {
-    const temps = await get(`${OCTOPRINT}/api/printer`);
+    const temps = await get(`${OCTOPRINT}/api/printer?apikey=${APIKEY}`);
     const isReached = checkIfTempReached(
       temps.temperature.tool0.actual,
       temps.temperature.tool0.target
@@ -422,12 +422,10 @@ module.exports = {
 };
 
 async function initiateLEDS() {
-  const octoLogin = await post(`${OCTOPRINT}/api/login`, {user:'sabaum', pass:'1234'})
-  console.log(octoLogin.name, 'name of octo login');
-  const octoPrintStatus = await get(`${OCTOPRINT}/api/printer`);
+  const octoPrintStatus = await get(`${OCTOPRINT}/api/printer?apikey=FCD5C4119908427AB46ED1F09AB28EED`);
   const wledStatus = await get(`${WLED}/json/info`);
-  if (octoPrintStatus.err && wledStatus) {
-    console.log("no response from octoprint");
+  if (octoPrintStatus.err && !wledStatus.err) {
+    console.log("no response from octoprint, but yes WLED", octoPrintStatus, );
     // return noOctoprintResponseTimeout = setTimeout(errorState, 2000)
     return errorState();
   }

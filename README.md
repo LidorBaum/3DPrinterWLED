@@ -66,6 +66,7 @@ MQTTport - should be 1883 if you did not change it <br />
 WLED - the IP of the ESP <br />
 LEDS - how many LEDs you are using <br />
 ROWS - how many rows are there in your arrangement (you can use matrix leds) <br />
+APIKEY - Octoprint API Key, can be find in settings -> API -> global api key. do not share this key <br />
 To save the config, press CTRL X , Y , ENTER <br />
 Enter command `npm i` to install all the dependencies of the project
 
@@ -115,3 +116,8 @@ run `systemctl enable led` to enable the script to run on startup. <br />
 Now restart your raspberry and LEDS (unplug and plug). <br />
 That's it, your LEDs supposed to be all up and running, according to the printer's state.
 Have fun!
+
+### Notes
+
+---
+I recommend installing [Print Time Genius](https://plugins.octoprint.org/plugins/PrintTimeGenius/) octoprint plugin for better progress bar accuracy.
