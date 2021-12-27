@@ -97,7 +97,7 @@ const checkIfOctoprintAlive = async () => {
   if (res.err && printerState === printerStates.disconnected) return;
   if (res.err && printerState !== printerStates.disconnected) {
     console.log("no response from octoprint");
-    clearInterval(isOctoprintAliveInterval);
+    // clearInterval(isOctoprintAliveInterval);
     return errorState();
   }
 };
@@ -278,6 +278,7 @@ const filamentChangeState = async () => {
 
 const printCancelledState = () => {
   printerState = printerStates.printCancelling;
+  console.log('scheduling timeout for cancelling');
   scheduleTimeout(onConnectState, 7000, printerStates.printCancelling);
 };
 
@@ -328,6 +329,7 @@ const prepareMatrix = (baseColor, fillColor, percaentage) => {
 };
 
 const printingState = () => {
+  clearInterval(isOctoprintAliveInterval)
   shouldCheckTemps = true;
   printerState = printerStates.printing;
   updateLedsPrinting();

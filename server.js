@@ -39,7 +39,7 @@ client.on("connect", () => {
   if (environment === "pi"){
     console.log('pi environment');
     octoprintLoading()
-    setTimeout(initiateLEDS, 20000);
+    setTimeout(initiateLEDS, 25000);
   }
   client.subscribe(Object.keys(topics), () => {
     console.log(`Subscribed to topics array`);
