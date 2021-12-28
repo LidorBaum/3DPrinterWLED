@@ -1,12 +1,7 @@
-// const express = require("express");
-// const cors = require("cors");
-// const app = express();
-// const http = require("http").createServer(app);
 const environment = process.env.NODE_ENV || "pi";
-console.log(environment);
+console.log(environment, '-environment');
 const { octoprintLoading, initiateLEDS, states } = require("./service");
 const { host, MQTTport } = require("./config");
-let isInitiated = false;
 const mqtt = require("mqtt");
 const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
 const connectUrl = `mqtt://${host}:${MQTTport}`;
@@ -32,11 +27,7 @@ const topics = {
 };
 client.on("connect", () => {
   console.log("Connected to MQTT");
-  console.log(environment , 'env');
-
-  //if it is the first subscribe && no pi, so no wait
   if (environment === "pi"){
-    console.log('pi environment');
     octoprintLoading()
     setTimeout(initiateLEDS, 25000);
   }
@@ -49,25 +40,5 @@ client.on("connect", () => {
   });
 });
 
-// const corsOptions = {
-//   origin: [
-//     "http://127.0.0.1:8080",
-//     "http://localhost:8080",
-//     "http://127.0.0.1:3000",
-//     "http://localhost:3000",
-//   ],
-//   credentials: true,
-//   allowedHeaders: ["content-type"],
-// };
-// app.use(cors(corsOptions));
-
-// app.get("/**", (req, res) => {
-//   res.send("hi");
-// });
-
-// const port = 4444;
-// http.listen(port, () => console.log(`Listening on port ${port}...`));
-
-//INITATE THE ALGORITHM
 if (environment !== "pi") initiateLEDS();
-// printingState()
+
