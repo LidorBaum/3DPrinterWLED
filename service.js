@@ -92,12 +92,12 @@ const checkIfTempReached = (actual, target) => {
 const checkIfOctoprintAlive = async () => {
   const res = await get(`${OCTOPRINT}/api/printer?apikey=${APIKEY}`);
   //if octo alive and the state is not connected
-  if((res.error || res.state ) && printerState !== printerStates.connected){
+  if ((res.error || res.state) && printerState !== printerStates.connected) {
     return onConnectState();
   }
 
   //if the octo alive and the state is already connected
-  if(res.error || res.state) return
+  if (res.error || res.state) return;
 
   //if octo not alive and the state is already disconnected
   if (res.err && printerState === printerStates.disconnected) return;
@@ -287,7 +287,7 @@ const printCancelledState = () => {
 };
 
 const printingState = () => {
-  clearInterval(isOctoprintAliveInterval)
+  clearInterval(isOctoprintAliveInterval);
   shouldCheckTemps = true;
   printerState = printerStates.printing;
   updateLedsPrinting();
@@ -408,8 +408,10 @@ const printerStates = {
   waitingOctoprintStatup: "waitingOctoprintStatup",
 };
 
-const initiateLEDS = async () =>  {
-  const octoPrintStatus = await get(`${OCTOPRINT}/api/printer?apikey=FCD5C4119908427AB46ED1F09AB28EED`);
+const initiateLEDS = async () => {
+  const octoPrintStatus = await get(
+    `${OCTOPRINT}/api/printer?apikey=FCD5C4119908427AB46ED1F09AB28EED`
+  );
   const wledStatus = await get(`${WLED}/json/info`);
   //if octo not responding but wled is alive
   if (octoPrintStatus.err && !wledStatus.err) {
@@ -443,7 +445,7 @@ const initiateLEDS = async () =>  {
       onConnectState();
       break;
   }
-}
+};
 
 module.exports = {
   initiateLEDS,
@@ -451,4 +453,3 @@ module.exports = {
   printingState,
   octoprintLoading,
 };
-

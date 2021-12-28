@@ -14,19 +14,20 @@ This project requires:
 
 This project will show you the current state of the printer.
 
-| State                                     | Colors      | Effect       | Notes                                                       |
-| ----------------------------------------- | ----------- | ------------ | ----------------------------------------------------------- |
+| State                                                                            | Colors      | Effect       | Notes                                                       |
+| -------------------------------------------------------------------------------- | ----------- | ------------ | ----------------------------------------------------------- |
 | Unrecoverable error, Printer disconnected, or Octoprint server is not responding | Red-White   | Blink        | The printer has disconnected from octoprint or halted       |
-| Connected                                 | Blue        | Fade         | The printer is connected to octoprint and operational       |
-| Printing                                  | Green-Red   | Progress-Bar | The printer is printing and the LEDs showing a progress bar |
-| Print Completed                           | Green       | Fireworks    | The printer has completed the print                         |
-| Print Cancelling                          | Blue        | Loading      | The printer is cancelling the print                         |
-| Filament Change                           | Blue-Violet | Running      | The printer is waiting for filament change                  |
-| Heating                                   | Red-Blue    | Progress-Bar | The printer is heating and the LEDs showing a progress bar  |
+| Connected                                                                        | Blue        | Fade         | The printer is connected to octoprint and operational       |
+| Printing                                                                         | Green-Red   | Progress-Bar | The printer is printing and the LEDs showing a progress bar |
+| Print Completed                                                                  | Green       | Fireworks    | The printer has completed the print                         |
+| Print Cancelling                                                                 | Blue        | Loading      | The printer is cancelling the print                         |
+| Filament Change                                                                  | Blue-Violet | Running      | The printer is waiting for filament change                  |
+| Heating                                                                          | Red-Blue    | Progress-Bar | The printer is heating and the LEDs showing a progress bar  |
 
 ### How To Install
 
 ---
+
 At first, you will flash the WLED image on your ESP. [flasher](https://github.com/esphome/esphome-flasher/releases), [image](https://github.com/Aircoookie/WLED/releases) <br />
 after flashing, connect to the WLED via wifi - WLED-AP, password is wled1234. <br />
 it will redirect you to the wled page, and there you need to connect the ESP to your home network. <br />
@@ -49,50 +50,54 @@ Run the following commands: <br />
 10. `sudo npm install -g n`
 11. `sudo n stable`
 12. `sudo reboot`
-<br />
-wait for your raspberry to reboot, and connect to via ssh again.
+    <br />
+    wait for your raspberry to reboot, and connect to via ssh again.
 
 <br />
 
 Clone the repository to the raspberry pi. enter the commands: <br />
+
 1. `cd /home/pi`
 2. `git clone https://github.com/LidorBaum/3DPrinterWLED.git`
 
 After the cloning succeeded, configure the program with your own parameters: <br />
+
 1. `cd /home/pi/3DPrinterWLED`
 2. `sudo nano config.js` <br />
-host & OCTOPRINT - your raspberry pi IP, should be the same address. keep the original pattern <br />
-MQTTport - should be 1883 if you did not change it <br />
-WLED - the IP of the ESP <br />
-LEDS - how many LEDs you are using <br />
-ROWS - how many rows are there in your arrangement (you can use matrix leds) <br />
-APIKEY - Octoprint API Key, can be find in settings -> API -> global api key. do not share this key <br />
-To save the config, press CTRL X , Y , ENTER <br />
-Enter command `npm i` to install all the dependencies of the project
+   host & OCTOPRINT - your raspberry pi IP, should be the same address. keep the original pattern <br />
+   MQTTport - should be 1883 if you did not change it <br />
+   WLED - the IP of the ESP <br />
+   LEDS - how many LEDs you are using <br />
+   ROWS - how many rows are there in your arrangement (you can use matrix leds) <br />
+   APIKEY - Octoprint API Key, can be find in settings -> API -> global api key. do not share this key <br />
+   To save the config, press CTRL X , Y , ENTER <br />
+   Enter command `npm i` to install all the dependencies of the project
 
 3. Go to octoprint in the browser, Go to settings -> MQTT (under plugins) - <br />
-Host - your Raspberry Pi IP <br />
-Port - 1883 <br />
-Uncheck the 'Enable retain flag' option <br />
-Hit save <br/>
-Clean the old events from the MQTT service: 
-1. `sudo systemctl stop mosquitto.service`
-2. `sudo rm /var/lib/mosquitto/mosquitto.db`
-3. `sudo systemctl start mosquitto.service`
-
+   Host - your Raspberry Pi IP <br />
+   Port - 1883 <br />
+   Uncheck the 'Enable retain flag' option <br />
+   Hit save <br/>
+   Clean the old events from the MQTT service:
+4. `sudo systemctl stop mosquitto.service`
+5. `sudo rm /var/lib/mosquitto/mosquitto.db`
+6. `sudo systemctl start mosquitto.service`
 
 Back to the pi's ssh terminal, enter the following command to listen to octoprint events: <br />
-* `mosquitto_sub -h localhost -p 1883 -t '#'` <br />
-Test your connection - press connect and disconnect in octoprint in the browser, <br />
-and you should see the events for connect and disconnect in the terminal.
+
+- `mosquitto_sub -h localhost -p 1883 -t '#'` <br />
+  Test your connection - press connect and disconnect in octoprint in the browser, <br />
+  and you should see the events for connect and disconnect in the terminal.
 
 Create the service for the program, so it will run automatically on the raspberry startup. <br />
 Press CTRL C to exit the listening to the MQTT, and enter the command: <br />
-* `sudo nano /etc/systemd/system/led.service` <br />
-this will create a new empty file
-the following code is the service. <br />
-you can copy and paste it to the file you created.
-```                        
+
+- `sudo nano /etc/systemd/system/led.service` <br />
+  this will create a new empty file
+  the following code is the service. <br />
+  you can copy and paste it to the file you created.
+
+```
 [Unit]
 Description="3DPrinterWLED-LidorBaum"
 
@@ -110,6 +115,7 @@ SyslogIdentifier=led
 [Install]
 WantedBy=multi-user.target
 ```
+
 Now save - CTRL X, Y, Enter <br />
 run `systemctl enable led` to enable the script to run on startup. <br />
 
@@ -120,4 +126,5 @@ Have fun!
 ### Notes
 
 ---
+
 I recommend installing [Print Time Genius](https://plugins.octoprint.org/plugins/PrintTimeGenius/) octoprint plugin for better progress bar accuracy.

@@ -20,7 +20,7 @@ const post = (endpoint, data) => {
 };
 
 async function ajax(endpoint, method = "get", data = null) {
-  try { 
+  try {
     const res = await axios({
       url: `${endpoint}`,
       method,

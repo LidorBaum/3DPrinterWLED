@@ -1,5 +1,5 @@
 const environment = process.env.NODE_ENV || "pi";
-console.log(environment, '-environment');
+console.log(environment, "-environment");
 const { octoprintLoading, initiateLEDS, states } = require("./service");
 const { host, MQTTport } = require("./config");
 const mqtt = require("mqtt");
@@ -27,8 +27,8 @@ const topics = {
 };
 client.on("connect", () => {
   console.log("Connected to MQTT");
-  if (environment === "pi"){
-    octoprintLoading()
+  if (environment === "pi") {
+    octoprintLoading();
     setTimeout(initiateLEDS, 25000);
   }
   client.subscribe(Object.keys(topics), () => {
@@ -41,4 +41,3 @@ client.on("connect", () => {
 });
 
 if (environment !== "pi") initiateLEDS();
-
