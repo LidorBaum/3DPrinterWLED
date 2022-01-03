@@ -69,7 +69,7 @@ After the cloning succeeded, configure the program with your own parameters: <br
    WLED - the IP of the ESP <br />
    LEDS - how many LEDs you are using <br />
    ROWS - how many rows are there in your arrangement (you can use matrix leds) <br />
-   APIKEY - Octoprint API Key, can be find in settings -> API -> global api key. do not share this key <br />
+   APIKEY - Octoprint API Key, can be found in settings -> API -> global api key. <br />
    To save the config, press CTRL X , Y , ENTER <br />
    Enter command `npm i` to install all the dependencies of the project
 
@@ -78,18 +78,18 @@ After the cloning succeeded, configure the program with your own parameters: <br
    Port - 1883 <br />
    Uncheck the 'Enable retain flag' option <br />
    Hit save <br/>
-   Clean the old events from the MQTT service:
+   In ssh, clean the old events from the MQTT service:
 4. `sudo systemctl stop mosquitto.service`
 5. `sudo rm /var/lib/mosquitto/mosquitto.db`
 6. `sudo systemctl start mosquitto.service`
 
-Back to the pi's ssh terminal, enter the following command to listen to octoprint events: <br />
+Enter the following command to listen to octoprint events: <br />
 
 - `mosquitto_sub -h localhost -p 1883 -t '#'` <br />
-  Test your connection - press connect and disconnect in octoprint in the browser, <br />
+  Test your connection - press printer connect and disconnect in octoprint in the browser, <br />
   and you should see the events for connect and disconnect in the terminal.
 
-Create the service for the program, so it will run automatically on the raspberry startup. <br />
+Create the service for the program, so it will run automatically on the raspberry startup: <br />
 Press CTRL C to exit the listening to the MQTT, and enter the command: <br />
 
 - `sudo nano /etc/systemd/system/led.service` <br />
@@ -116,10 +116,10 @@ SyslogIdentifier=led
 WantedBy=multi-user.target
 ```
 
-Now save - CTRL X, Y, Enter <br />
+Save the file - CTRL X, Y, Enter <br />
 run `systemctl enable led` to enable the script to run on startup. <br />
 
-Now restart your raspberry and LEDS (unplug and plug). <br />
+Now restart your Raspberry Pi and LEDS (unplug and plug). <br />
 That's it, your LEDs supposed to be all up and running, according to the printer's state.
 Have fun!
 
