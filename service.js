@@ -375,7 +375,7 @@ const updateLedsPrinting = async () => {
     else setNewPrintInterval(40000);
   }
   const percaentage = Math.floor((timeElapsed * 100) / overallTime);
-  if (percaentage === 100) return clearInterval(interval);
+  if (percaentage === 100) return clearInterval(printIntervalTimerObj.intervalId);
   if (percaentage === currentPercentage) return;
   currentPercentage = percaentage;
   const json = prepareMatrix(
