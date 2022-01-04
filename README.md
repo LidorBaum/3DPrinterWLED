@@ -1,7 +1,14 @@
 # 3DPrinterWLED
 
 The project will show you the current state of your printer, and progress bar for live printing / heating through smart LEDs
-
+<p align="center">
+    <a href="https://www.youtube.com/watch?v=hYJJ91rFYmg">
+<img src="https://res.cloudinary.com/echoshare/image/upload/v1641316267/Untitled-4_mdepf9.jpg" width="250"  />
+        <a />
+        <br />
+        Click the image to open YouTube video demo
+<p />
+<br />
 This project requires:
 
 - Raspberry Pi with Octoprint installed (I used Pi 4B 4GB)
