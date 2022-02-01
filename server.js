@@ -29,7 +29,7 @@ client.on("connect", () => {
   console.log("Connected to MQTT");
   if (environment === "pi") {
     octoprintLoading();
-    setTimeout(initiateLEDS, 25000);
+    setTimeout(initiateLEDS, 3000);
   }
   client.subscribe(Object.keys(topics), () => {
     console.log(`Subscribed to topics array`);

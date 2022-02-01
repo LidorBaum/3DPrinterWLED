@@ -291,6 +291,7 @@ const printingState = () => {
   shouldCheckTemps = true;
   printerState = printerStates.printing;
   updateLedsPrinting();
+  console.log('now start interval');
   printIntervalTimerObj.intervalId = setInterval(updateLedsPrinting, 3000);
 };
 
@@ -341,6 +342,7 @@ const prepareMatrix = (baseColor, fillColor, percaentage) => {
 };
 
 const updateLedsPrinting = async () => {
+  console.log('processing the update');
   const jobInfo = await get(`${OCTOPRINT}/api/job?apikey=${APIKEY}`);
   if (jobInfo.err || jobInfo.printerNotConnected) {
     errorState();
@@ -369,6 +371,7 @@ const updateLedsPrinting = async () => {
   }
   const timeElapsed = Number((jobInfo.progress.printTime / 60).toFixed(2));
   const timeLeft = Number((jobInfo.progress.printTimeLeft / 60).toFixed(2));
+  if(!timeLeft && timeElapsed)  
   const overallTime = Number((timeElapsed + timeLeft).toFixed(2));
   if (!printIntervalTimerObj.isUpdated) {
     if (overallTime < 60) setNewPrintInterval(10000);
@@ -410,7 +413,7 @@ const printerStates = {
 
 const initiateLEDS = async () => {
   const octoPrintStatus = await get(
-    `${OCTOPRINT}/api/printer?apikey=FCD5C4119908427AB46ED1F09AB28EED`
+    `${OCTOPRINT}/api/printer?apikey=${APIKEY}`
   );
   const wledStatus = await get(`${WLED}/json/info`);
   //if octo not responding but wled is alive
@@ -422,6 +425,7 @@ const initiateLEDS = async () => {
   if (octoPrintStatus.err || wledStatus.err) return;
 
   if (octoPrintStatus.printerNotConnected) return errorState();
+  console.log(octoPrintStatus.state.text);
   switch (octoPrintStatus.state.text) {
     case "Operational":
       printerState = printerStates.connected;
