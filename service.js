@@ -291,7 +291,6 @@ const printingState = () => {
   shouldCheckTemps = true;
   printerState = printerStates.printing;
   updateLedsPrinting();
-  console.log('now start interval');
   printIntervalTimerObj.intervalId = setInterval(updateLedsPrinting, 3000);
 };
 
@@ -342,12 +341,11 @@ const prepareMatrix = (baseColor, fillColor, percaentage) => {
 };
 
 const updateLedsPrinting = async () => {
-  console.log('processing the update');
   const jobInfo = await get(`${OCTOPRINT}/api/job?apikey=${APIKEY}`);
   if (jobInfo.err || jobInfo.printerNotConnected) {
     errorState();
   }
-  if (jobInfo.progress.printTime === null) {
+  if (jobInfo.progress.printTime === null ) {
     if (isAlreadyOff) return;
     isAlreadyOff = true;
     return;
@@ -371,7 +369,6 @@ const updateLedsPrinting = async () => {
   }
   const timeElapsed = Number((jobInfo.progress.printTime / 60).toFixed(2));
   const timeLeft = Number((jobInfo.progress.printTimeLeft / 60).toFixed(2));
-  if(!timeLeft && timeElapsed)  
   const overallTime = Number((timeElapsed + timeLeft).toFixed(2));
   if (!printIntervalTimerObj.isUpdated) {
     if (overallTime < 60) setNewPrintInterval(10000);
@@ -420,19 +417,17 @@ const initiateLEDS = async () => {
   if (octoPrintStatus.err && !wledStatus.err) {
     return errorState();
   }
-
   //if octo not responding or WLED not alive, nothing to procceed, waiting for mqtt
   if (octoPrintStatus.err || wledStatus.err) return;
-
   if (octoPrintStatus.printerNotConnected) return errorState();
-  console.log(octoPrintStatus.state.text);
   switch (octoPrintStatus.state.text) {
     case "Operational":
       printerState = printerStates.connected;
       onConnectState();
       break;
     case "Printing":
-      onConnectState();
+      onConnectState()
+
       const isReached = checkIfTempReached(
         octoPrintStatus.temperature.tool0.actual,
         octoPrintStatus.temperature.tool0.target
