@@ -93,7 +93,7 @@ const checkIfOctoprintAlive = async () => {
   const res = await get(`${OCTOPRINT}/api/printer?apikey=${APIKEY}`);
   //if octo alive and the state is not connected
   if ((res.error || res.state) && printerState !== printerStates.connected) {
-    return onConnectState();
+    return initiateLEDS();
   }
 
   //if the octo alive and the state is already connected
@@ -104,7 +104,7 @@ const checkIfOctoprintAlive = async () => {
 
   //if octo not alive and the state is not disconnected
   if (res.err && printerState !== printerStates.disconnected) {
-    return errorState();
+    return initiateLEDS();
   }
 };
 
@@ -432,6 +432,7 @@ const initiateLEDS = async () => {
       onConnectState();
       break;
     case "Printing":
+      onConnectState();
       const isReached = checkIfTempReached(
         octoPrintStatus.temperature.tool0.actual,
         octoPrintStatus.temperature.tool0.target
